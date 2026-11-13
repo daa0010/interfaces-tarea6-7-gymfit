@@ -49,7 +49,7 @@
                   <VBox prefHeight="200.0" prefWidth="480.0">
                      <children>
                         <Label text="Alta de socio nuevo" />
-                        <GridPane hgap="15.0" vgap="12.0">
+                        <GridPane alignment="CENTER_LEFT" hgap="15.0" vgap="12.0">
                           <columnConstraints>
                             <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                             <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
@@ -80,7 +80,7 @@
                                  </children>
                               </HBox>
                               <Label text="Provincia" GridPane.rowIndex="4" />
-                              <ComboBox prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                              <ComboBox id="cmbProvincia" prefWidth="150.0" promptText="Seleccione una provincia" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                               <Label text="Cuota" GridPane.rowIndex="5" />
                               <FlowPane prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
                                  <children>
@@ -92,17 +92,17 @@
                                  </children>
                               </FlowPane>
                               <Label text="Clases" GridPane.rowIndex="6" />
-                              <ComboBox prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                              <ComboBox id="cmbClases" prefWidth="150.0" promptText="Seleccione una clase" GridPane.columnIndex="1" GridPane.rowIndex="6" />
                               <Label text="IBAN" GridPane.rowIndex="7" />
                               <TextField promptText="ESXX XXXX XXXX..." GridPane.columnIndex="1" GridPane.rowIndex="7" />
                            </children>
                         </GridPane>
                         <HBox alignment="BOTTOM_CENTER" prefHeight="100.0" prefWidth="200.0" spacing="15.0">
                            <children>
-                              <Button mnemonicParsing="false" text="Limpiar datos" />
+                              <Button minWidth="110.0" mnemonicParsing="false" text="Limpiar datos" />
                               <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-                              <Button mnemonicParsing="false" text="Cancelar" />
-                              <Button layoutX="383.0" layoutY="85.0" mnemonicParsing="false" text="Guardar socio" />
+                              <Button minWidth="100.0" mnemonicParsing="false" text="Cancelar" />
+                              <Button layoutX="383.0" layoutY="85.0" minWidth="120.0" mnemonicParsing="false" text="Guardar socio" />
                            </children>
                         </HBox>
                      </children>
@@ -110,6 +110,15 @@
                   <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                      <children>
                         <Label text="Listado de socios registrados" />
+                        <TableView prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                          <columns>
+                            <TableColumn prefWidth="120.0" text="Nombre" />
+                            <TableColumn prefWidth="150.0" text="Apellidos" />
+                              <TableColumn prefWidth="100.0" text="Fecha Nacimiento" />
+                              <TableColumn prefWidth="90.0" text="Cuota" />
+                              <TableColumn prefWidth="110.0" text="Provincia" />
+                          </columns>
+                        </TableView>
                      </children>
                   </VBox>
                </children>
