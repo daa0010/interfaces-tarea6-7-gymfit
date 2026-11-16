@@ -1,0 +1,42 @@
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #f4f6f8;
+}
+
+/* Títulos */
+.titulo-seccion {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0056b3;
+}
+
+/* Botones y estados */
+.button {
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+.btn-primario {
+    -fx-background-color: #0056b3;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.btn-secundario {
+    -fx-background-color: #e2e6ea;
+    -fx-border-color: #ced4da;
+    -fx-border-radius: 4px;
+}
+.btn-peligro-borde {
+    -fx-background-color: transparent;
+    -fx-text-fill: #dc3545;
+    -fx-border-color: #dc3545;
+    -fx-border-radius: 4px;
+}
+
+/* Panel de error superpuesto */
+.dialogo-error {
+    -fx-background-color: white;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5);
+}
