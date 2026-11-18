@@ -115,6 +115,34 @@ public class SocioRepository {
         socios.add(socio);
     }
 
+    /** Elimina al socio de la base de datos y de la lista observable. */
+    public void borrar(Socio socio) throws IOException {
+        try (Connection conexion = abrir()) {
+            // Inicio la transacción para que, si algo falla, no se quede a medias
+            conexion.setAutoCommit(false);
+
+            // 1. Borro sus registros en la tabla de clases para evitar errores de clave foránea
+            try (PreparedStatement sentencia = conexion.prepareStatement("DELETE FROM socio_clases WHERE socio_id = ?")) {
+                sentencia.setString(1, socio.id());
+                sentencia.executeUpdate();
+            }
+
+            // 2. Borro al socio principal de la tabla socios
+            try (PreparedStatement sentencia = conexion.prepareStatement("DELETE FROM socios WHERE id = ?")) {
+                sentencia.setString(1, socio.id());
+                sentencia.executeUpdate();
+            }
+
+            // Confirmo los cambios
+            conexion.commit();
+        } catch (SQLException e) {
+            throw new IOException("No se pudo borrar el socio de la base de datos " + archivo + ": " + e.getMessage(), e);
+        }
+
+        // Lo elimino de la lista en memoria para que desaparezca automáticamente de tu tabla visual
+        socios.remove(socio);
+    }
+
     private Connection abrir() throws SQLException {
         Connection conexion = DriverManager.getConnection("jdbc:sqlite:" + archivo.toAbsolutePath());
         try (Statement sentencia = conexion.createStatement()) {

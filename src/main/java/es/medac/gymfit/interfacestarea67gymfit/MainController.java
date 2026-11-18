@@ -11,6 +11,8 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -62,11 +64,22 @@ public class MainController {
     private final ToggleGroup sexoGrupo = new ToggleGroup();
     private final ToggleGroup cuotaGrupo = new ToggleGroup();
 
-    // Esta es la lista que se conecta a la tabla
-    private final ObservableList<Socio> listaSocios = FXCollections.observableArrayList();
+    // --- DATOS INTERNOS ---
+    private Socio socioActual = null;
 
-    @FXML
+    // Repositorio que maneja la base de datos (se guardará en la carpeta del usuario)
+    private final SocioRepository repositorio = new SocioRepository(Path.of(System.getProperty("user.home"), "gymfit_socios.db"));
+
+
     public void initialize() {
+        // 0. CARGAR BASE DE DATOS
+        try {
+            repositorio.cargar(LocalDate.now());
+        } catch (IOException e) {
+            mostrarError("Error fatal", "No se pudo cargar la base de datos: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         // 1. Cargo los RadioButtons de Sexo y Cuota
         sexoBox.getChildren().clear();
         for (Sexo sexo : Sexo.values()) {
@@ -96,7 +109,7 @@ public class MainController {
         });
 
         // 4. CONFIGURAR LA TABLA Y SUS COLUMNAS
-        tabla.setItems(listaSocios);
+        tabla.setItems(repositorio.socios());
 
         columnaNombre.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().nombre()));
         columnaApellidos.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().apellido1() + " " + cell.getValue().apellido2()));
@@ -105,6 +118,28 @@ public class MainController {
         columnaNacimiento.setCellValueFactory(cell -> new SimpleStringProperty(Fechas.formatear(cell.getValue().fechaNacimiento())));
         columnaCuota.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().cuota().nombre()));
         columnaProvincia.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().provincia().nombre()));
+
+        // Detectar selecciones en la tabla
+        tabla.getSelectionModel().selectedItemProperty().addListener((obs, socioAnterior, socioSeleccionado) -> {
+            if (socioSeleccionado != null) {
+                cargarSocio(socioSeleccionado);
+            }
+        });
+
+        // Construyo el menú contextual para cuando el usuario haga clic derecho en la tabla
+        ContextMenu menuContextual = new ContextMenu();
+
+        MenuItem editarItem = new MenuItem("Editar socio");
+        editarItem.setOnAction(e -> {
+            Socio seleccionado = tabla.getSelectionModel().getSelectedItem();
+            if (seleccionado != null) cargarSocio(seleccionado);
+        });
+
+        MenuItem borrarItem = new MenuItem("Borrar socio");
+        borrarItem.setOnAction(e -> borrar());
+
+        menuContextual.getItems().addAll(editarItem, borrarItem);
+        tabla.setContextMenu(menuContextual); // Asigno el menú a la tabla
     }
 
     @FXML
@@ -148,28 +183,35 @@ public class MainController {
 
         List<String> clasesSeleccionadas = clasesCombo.getValue() != null ? List.of(clasesCombo.getValue()) : List.of();
 
+        // Si estoy editando, mantengo su ID y fechas originales. Si es nuevo, genero unos nuevos.
         Socio nuevoSocio = new Socio(
-                UUID.randomUUID().toString(),
+                socioActual == null ? UUID.randomUUID().toString() : socioActual.id(),
                 nombreField.getText().trim(),
                 ape1, ape2,
                 nacimientoField.getValue(),
-                sexoGrupo.getSelectedToggle() != null ? (Sexo) sexoGrupo.getSelectedToggle().getUserData() : null, provinciaCombo.getValue(),
+                sexoGrupo.getSelectedToggle() != null ? (Sexo) sexoGrupo.getSelectedToggle().getUserData() : null,
+                provinciaCombo.getValue(),
                 (Cuota) cuotaGrupo.getSelectedToggle().getUserData(),
                 clasesSeleccionadas,
                 Iban.normalizar(ibanField.getText()),
-                LocalDate.now().plusMonths(1),
-                Situacion.ALTA
+                socioActual == null ? LocalDate.now().plusMonths(1) : socioActual.vencimiento(),
+                socioActual == null ? Situacion.ALTA : socioActual.situacion()
         );
 
-        // Añadir el nuevo socio a la tabla
-        listaSocios.add(nuevoSocio);
+        try {
+            // El repositorio se encarga de saber si es nuevo o una edición, e insertarlo en SQLite
+            repositorio.guardar(nuevoSocio);
+        } catch (IOException e) {
+            mostrarError("Error al guardar", "No se pudo guardar el socio en la base de datos: " + e.getMessage());
+        }
 
-        // Limpiar formulario
-        nuevo();
+        nuevo(); // Limpio el formulario al terminar
     }
 
     @FXML
     public void nuevo() {
+        socioActual = null;
+        tabla.getSelectionModel().clearSelection();
         nombreField.clear();
         apellidosField.clear();
         nacimientoField.setValue(null);
@@ -180,9 +222,68 @@ public class MainController {
         cuotaGrupo.selectToggle(null);
     }
 
+    private void cargarSocio(Socio socio) {
+        socioActual = socio;
+
+        nombreField.setText(socio.nombre());
+        apellidosField.setText(socio.apellido1() + (socio.apellido2().isEmpty() ? "" : " " + socio.apellido2()));
+        nacimientoField.setValue(socio.fechaNacimiento());
+        provinciaCombo.setValue(socio.provincia());
+        ibanField.setText(socio.iban());
+
+        // Marcar el RadioButton de Sexo correcto
+        sexoGrupo.getToggles().forEach(toggle -> {
+            if (toggle.getUserData() == socio.sexo()) sexoGrupo.selectToggle(toggle);
+        });
+
+        // Marcar el RadioButton de Cuota correcto
+        cuotaGrupo.getToggles().forEach(toggle -> {
+            if (toggle.getUserData() == socio.cuota()) cuotaGrupo.selectToggle(toggle);
+        });
+
+        // Seleccionar la clase en el ComboBox (cogemos la primera de la lista si existe)
+        if (!socio.clases().isEmpty()) {
+            clasesCombo.setValue(socio.clases().get(0));
+        } else {
+            clasesCombo.setValue(null);
+        }
+    }
+
     @FXML
     public void cancelar() {
-        nuevo();
+        if (socioActual != null) {
+            // Si estaba editando, restauro los datos originales descartando lo que haya escrito
+            cargarSocio(socioActual);
+        } else {
+            // Si estaba creando uno nuevo, simplemente limpio el formulario
+            nuevo();
+        }
+    }
+
+    @FXML
+    public void borrar() {
+        if (socioActual == null) {
+            mostrarError("Ningún socio seleccionado", "Por favor, haz clic en un socio de la tabla para poder borrarlo.");
+            return;
+        }
+
+        // Lanzo un diálogo nativo de confirmación antes de eliminar nada
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar borrado");
+        confirmacion.setHeaderText("Vas a dar de baja al socio: " + socioActual.nombre());
+        confirmacion.setContentText("¿Estás seguro? Esta acción no se puede deshacer.");
+
+        // Si el usuario pulsa Aceptar (OK), procedo a borrar
+        Optional<ButtonType> resultado = confirmacion.showAndWait();
+        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
+            try {
+                repositorio.borrar(socioActual);
+            } catch (IOException e) {
+                mostrarError("Error al borrar", "Hubo un problema al borrar en disco: " + e.getMessage());
+                return;
+            }
+            nuevo();
+        }
     }
 
     private void mostrarError(String titulo, String mensaje) {
@@ -194,5 +295,33 @@ public class MainController {
     @FXML
     public void ocultarError() {
         capaOscura.setVisible(false);
+    }
+
+    @FXML
+    public void descartarError() {
+        ocultarError(); // Cierro el modal de error
+        cancelar(); // Restauro el formulario descartando lo que estuviera mal
+    }
+
+    @FXML
+    public void salir() {
+        // Cierro la aplicación de forma limpia usando el cierre oficial de JavaFX
+        javafx.application.Platform.exit();
+    }
+
+    @FXML
+    public void acercaDe() {
+        // Muestro una pequeña ventana emergente nativa con la información de mi aplicación
+        Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+        alerta.setTitle("Acerca de GymFit");
+        alerta.setHeaderText("GymFit - Gestión de Socios");
+        alerta.setContentText("Desarrollado para la tarea de Desarrollo de Interfaces.\nVersión 1.0");
+        alerta.showAndWait();
+    }
+
+    @FXML
+    public void simularError() {
+        // Aprovecho el modal oscuro que ya tengo hecho para lanzar un error de prueba
+        mostrarError("Error simulado", "Este es un mensaje de prueba lanzado desde el botón superior.");
     }
 }
