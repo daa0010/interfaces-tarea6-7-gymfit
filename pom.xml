@@ -66,7 +66,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                es.medac.gymfit.interfacestarea67gymfit/es.medac.gymfit.interfacestarea67gymfit.HelloApplication
+                                es.medac.gymfit.interfacestarea67gymfit/es.medac.gymfit.interfacestarea67gymfit.GymFitManager
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>

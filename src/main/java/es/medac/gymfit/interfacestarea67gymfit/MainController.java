@@ -318,10 +318,4 @@ public class MainController {
         alerta.setContentText("Desarrollado para la tarea de Desarrollo de Interfaces.\nVersión 1.0");
         alerta.showAndWait();
     }
-
-    @FXML
-    public void simularError() {
-        // Aprovecho el modal oscuro que ya tengo hecho para lanzar un error de prueba
-        mostrarError("Error simulado", "Este es un mensaje de prueba lanzado desde el botón superior.");
-    }
 }

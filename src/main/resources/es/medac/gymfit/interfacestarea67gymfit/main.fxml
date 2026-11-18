@@ -48,13 +48,14 @@
                         <ToolBar prefHeight="40.0" prefWidth="200.0">
                             <items>
                                 <Button mnemonicParsing="false" onAction="#nuevo" text="📄 Nuevo">
-                                    <tooltip><Tooltip text="Limpia el formulario para crear un socio desde cero"/></tooltip>
+                                    <tooltip>
+                                        <Tooltip text="Limpia el formulario para crear un socio desde cero"/>
+                                    </tooltip>
                                 </Button>
                                 <Button mnemonicParsing="false" onAction="#guardar" text="💾 Guardar">
-                                    <tooltip><Tooltip text="Guarda los datos del socio actual"/></tooltip>
-                                </Button>
-                                <Button layoutX="88.0" layoutY="10.0" mnemonicParsing="false" onAction="#simularError" text="⚠️ Simular Error">
-                                    <tooltip><Tooltip text="Lanza una prueba de la ventana de error"/></tooltip>
+                                    <tooltip>
+                                        <Tooltip text="Guarda los datos del socio actual"/>
+                                    </tooltip>
                                 </Button>
                             </items>
                         </ToolBar>
